@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import enum
 import os
 import pathlib
 import pickle
@@ -485,7 +486,6 @@ def predict_kitti_to_anno(net,
     batch_image_shape = example[9]
 
     batch_imgidx = example[8]
-
     pillar_x = example[0][:, :, 0].unsqueeze(0).unsqueeze(0)
     pillar_y = example[0][:, :, 1].unsqueeze(0).unsqueeze(0)
     pillar_z = example[0][:, :, 2].unsqueeze(0).unsqueeze(0)
@@ -522,6 +522,7 @@ def predict_kitti_to_anno(net,
              num_points_per_pillar, x_sub_shaped, y_sub_shaped,
              mask, coors, anchors, anchors_mask, rect, Trv2c, P2, image_idx]
 
+    # print("input shape ")
     predictions_dicts = net(input)
 
     annos = []
@@ -681,6 +682,17 @@ def evaluate(config_path,
         example_tuple[8] = torch.from_numpy(example_tuple[8])
         example_tuple[9] = torch.from_numpy(example_tuple[9])
 
+        # for key in example:
+        #     if torch.is_tensor(example[key]) or type(example[key] )==np.ndarray:
+        #         print(key,example[key].shape)
+        # print("#############")
+        # for i, ex in enumerate(example_tuple):
+        #     if torch.is_tensor(ex) or type(ex)==np.ndarray:
+        #         print(i, ex.shape)
+        #     else :
+        #         print(i, " = ", ex)
+        # print("####################################################")
+
         if (example_tuple[6].size()[0] != input_cfg.batch_size):
             continue
 
@@ -776,11 +788,11 @@ def export_onnx(net, example, class_names, batch_image_shape,
                 num_points_per_pillar, x_sub_shaped, y_sub_shaped, mask]
 
     print('-------------- network readable visiual --------------')
-    torch.onnx.export(net, example1, "pfe.onnx", verbose=False, input_names=input_names)
+    torch.onnx.export(net, example1, "pfe.onnx", verbose=False, input_names=input_names, opset_version=6)
     print('pfe.onnx transfer success ...')
 
     rpn_input = torch.ones([1, 64, 496, 432], dtype=torch.float32, device=pillar_x.device)
-    torch.onnx.export(net.rpn, rpn_input, "rpn.onnx", verbose=False)
+    torch.onnx.export(net.rpn, rpn_input, "rpn.onnx", verbose=False, opset_version=6)
     print('rpn.onnx transfer success ...')
 
     return 0

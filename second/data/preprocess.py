@@ -303,7 +303,7 @@ def prep_pointcloud(input_dict,
     return example
 
 
-def _read_and_prep_v9(info, root_path, num_point_features, prep_func):
+def _read_and_prep_v9(info, root_path, num_point_features, prep_func, return_input=False):
     """read data from KITTI-format infos, then call prep function.
     """
     # velodyne_path = str(pathlib.Path(root_path) / info['velodyne_path'])
@@ -356,5 +356,9 @@ def _read_and_prep_v9(info, root_path, num_point_features, prep_func):
     example["image_shape"] = input_dict["image_shape"]
     if "anchors_mask" in example:
         example["anchors_mask"] = example["anchors_mask"].astype(np.uint8)
+
+    if return_input:
+        example['pointcloud'] = points
+        example['image_path'] = info['img_path']
     return example
 
