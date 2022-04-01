@@ -680,6 +680,15 @@ class VoxelNet(nn.Module):
         y_sub_shaped = example[6]
         mask = example[7]
 
+        # print(pillar_x.shape)
+        # print(pillar_y.shape)
+        # print(pillar_z.shape)
+        # print(pillar_i.shape)
+        # print(num_points.shape)
+        # print(x_sub_shaped.shape)
+        # print(y_sub_shaped.shape)
+        # print(mask.shape)
+
         voxel_features = self.voxel_feature_extractor(pillar_x, pillar_y, pillar_z, pillar_i,
                                                       num_points, x_sub_shaped, y_sub_shaped, mask)
 

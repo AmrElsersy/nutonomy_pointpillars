@@ -522,7 +522,6 @@ def predict_kitti_to_anno(net,
              num_points_per_pillar, x_sub_shaped, y_sub_shaped,
              mask, coors, anchors, anchors_mask, rect, Trv2c, P2, image_idx]
 
-    # print("input shape ")
     predictions_dicts = net(input)
 
     annos = []
