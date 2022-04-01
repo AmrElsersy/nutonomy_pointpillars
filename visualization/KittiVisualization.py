@@ -155,6 +155,7 @@ class KittiVisualizer:
                 color = [c * 255 for c in self.ground_truth_color]
                 self.__draw_bev_box3d(BEV, obj.bbox_3d, color, calib)
 
+        print('BEV.shape',BEV.shape)
         if self.__scene_2D_mode:
             return BEV 
 

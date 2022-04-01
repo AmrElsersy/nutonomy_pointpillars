@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, '../nutonomy_pointpillars')
 sys.path.insert(0, '../')
-from KittiUtils import *
+from visualization.KittiUtils import *
 from PIL import Image
 
 class KittiDataset(Dataset):
@@ -59,8 +59,7 @@ class KittiDataset(Dataset):
     def read_pointcloud_bin(self, path):
         # read .bin and convert to tensor
         pointCloud = np.fromfile(path, dtype=np.float32)
-        # reshape to get each point
-        pointCloud = pointCloud.reshape(-1, 3)
+        pointCloud = pointCloud.reshape(-1, 4)
 
         return pointCloud
 

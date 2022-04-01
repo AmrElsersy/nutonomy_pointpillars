@@ -20,19 +20,19 @@ y (used with x lidar)
 
 # =========================  Config ===============================
 boundary = {
-    "minX": 0,
-    "maxX": 50,
-    "minY": -25,
-    "maxY": 25,
-    "minZ": -2.73,
-    "maxZ": 1.27
+    "minX": -40,
+    "maxX": 40,
+    "minY": -39,
+    "maxY": 39,
+    "minZ": -3,
+    "maxZ": 1
 }
 
 BEV_WIDTH  = 608
 BEV_HEIGHT = 608
 
 
-descretization_x = BEV_HEIGHT / boundary["maxX"]
+descretization_x = BEV_HEIGHT / (boundary["maxX"] - boundary['minX'])
 descretization_y = BEV_WIDTH / (boundary["maxY"] - boundary["minY"])
 descretization_z = 1 / float(np.abs(boundary['maxZ'] - boundary['minZ']))
 max_height = float(np.abs(boundary['maxZ'] - boundary['minZ']))
@@ -57,7 +57,7 @@ def pointcloud_to_bev(pointcloud):
     density_map   = np.zeros((MAP_HEIGHT, MAP_WIDTH)) # density of the mapped 3D points to a the pixel
 
     # shape = (n_points, 1)
-    x_bev = np.int_((BEV_HEIGHT)  - pointcloud[:, 0] * descretization_x )
+    x_bev = np.int_((BEV_HEIGHT/2)  - pointcloud[:, 0] * descretization_x )
     y_bev = np.int_((BEV_WIDTH/2) - pointcloud[:, 1] * descretization_y)
     z_bev = pointcloud[:, 2] 
     
@@ -84,7 +84,7 @@ def pointcloud_to_bev(pointcloud):
     return BEV
 
 def corner_to_bev_coord(corner):
-    x_bev = np.int_((BEV_HEIGHT)  - corner[0] * descretization_x )
+    x_bev = np.int_((BEV_HEIGHT/2)  - corner[0] * descretization_x )
     y_bev = np.int_((BEV_WIDTH/2) - corner[1] * descretization_y)
     return np.array([y_bev, x_bev])
 

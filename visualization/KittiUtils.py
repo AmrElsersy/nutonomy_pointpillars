@@ -75,6 +75,40 @@ class KittiCalibration:
         # inverse of Tr_velo_cam
         self.Tr_cam_to_velo = self.inverse_Tr(self.Tr_velo_to_cam)
 
+    def __init__(self, calib_path):
+        self.calib_path = calib_path
+        self.calib_matrix = {}
+        self.calib_matrix = self.parse_calib_files(calib_path)
+
+        self.P0 = self.calib_matrix["P0"]
+        self.P1 = self.calib_matrix["P1"]
+        # Projection Matrix (Intrensic) .. from camera 3d (after rectification) to image coord.
+        self.P2 = self.calib_matrix["P2"].reshape(3, 4)
+        self.P3 = self.calib_matrix["P3"]
+        # rectification rotation matrix 3x3
+        self.R0_rect = self.calib_matrix["R0_rect"].reshape(3,3)
+        # Extrensic Transilation-Rotation Matrix from LIDAR to Cam ref(before rectification)
+        self.Tr_velo_to_cam = self.calib_matrix["Tr_velo_to_cam"].reshape(3,4)
+        # inverse of Tr_velo_cam
+        self.Tr_cam_to_velo = self.inverse_Tr(self.Tr_velo_to_cam)
+
+    def parse_calib_files(self, calib_path):
+        assert self.calib_path is not None
+
+        mat_ = {}
+        with open(os.path.join(calib_path), 'r') as calib_file:
+            for line in calib_file:
+                line = line.split()
+                # Avoiding empty line exception
+                if len(line) == 0:
+                    continue
+                # The only non-float values in these files are dates, which
+                # we don't care about anyway
+                try:
+                    mat_[line[0][:-1]] = np.array(line[1:], dtype=np.float32)
+                except ValueError:
+                    continue
+        return mat_
 
     def rotx(self, t):
         """ 3D Rotation about the x-axis. """

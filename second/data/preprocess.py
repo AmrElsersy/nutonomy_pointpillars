@@ -311,7 +311,7 @@ def _read_and_prep_v9(info, root_path, num_point_features, prep_func, return_inp
     v_path = pathlib.Path(root_path) / info['velodyne_path']
     # v_path = v_path.parent.parent / (
     #     v_path.parent.stem + "_reduced") / v_path.name
-    print(v_path)
+
     points = np.fromfile(
         str(v_path), dtype=np.float32,
         count=-1).reshape([-1, num_point_features])
