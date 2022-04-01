@@ -787,6 +787,8 @@ def export_onnx(net, example, class_names, batch_image_shape,
     example1 = [pillar_x, pillar_y, pillar_z, pillar_i,
                 num_points_per_pillar, x_sub_shaped, y_sub_shaped, mask]
 
+    net.onnx_mode = True
+
     print('-------------- network readable visiual --------------')
     torch.onnx.export(net, example1, "pfe.onnx", verbose=False, input_names=input_names, opset_version=6)
     print('pfe.onnx transfer success ...')

@@ -172,6 +172,13 @@ def test(config_path,
         #               4: 'Trv2c', 5: 'P2', 6: 'anchors', 7: 'anchors_mask'
         #               8: 'image_idx', 9: 'image_shape']
 
+        print('voxels ',example['voxels'].shape)
+        print('num_points ',example['num_points'])
+        print('coordinates ',example['coordinates'])
+        print('anchors ',example['anchors'])
+        print('anchors_mask ',example['anchors_mask'])
+
+
         coord_numpy = example['coordinates'].numpy()
         coord_numpy = coord_numpy.squeeze(0)
         coord_numpy = np.pad(
@@ -190,16 +197,16 @@ def test(config_path,
 
         example_tuple = list(example.values())
 
-        for key in example:
-            if torch.is_tensor(example[key]) or type(example[key] )==np.ndarray:
-                print(key,example[key].shape)
-        print("#############")
-        for i, ex in enumerate(example_tuple):
-            if torch.is_tensor(ex) or type(ex)==np.ndarray:
-                print(i, ex.shape)
-            else :
-                print(i, " = ", ex)
-        print("####################################################")
+        # for key in example:
+        #     if torch.is_tensor(example[key]) or type(example[key] )==np.ndarray:
+        #         print(key,example[key].shape)
+        # print("#############")
+        # for i, ex in enumerate(example_tuple):
+        #     if torch.is_tensor(ex) or type(ex)==np.ndarray:
+        #         print(i, ex.shape)
+        #     else :
+        #         print(i, " = ", ex)
+        # print("####################################################")
      
         with torch.no_grad():
             predictions = predict_kitti_to_anno(
