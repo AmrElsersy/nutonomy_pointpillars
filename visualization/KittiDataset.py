@@ -1,6 +1,7 @@
 import PIL
 from PIL import Image
 import os
+from cv2 import split
 from torch.utils.data import Dataset 
 import numpy as np
 import cv2
@@ -27,6 +28,9 @@ class KittiDataset(Dataset):
             end_idx = -1
         else:
             raise ValueError()
+        self.skip_anno = False
+        if root.split('/')[-1] == 'testing':
+            self.skip_anno = True
 
         self.rootPointclouds = os.path.join(self.root, "velodyne")
         self.rootImages = os.path.join(self.root, "image_2")
@@ -35,26 +39,30 @@ class KittiDataset(Dataset):
 
         self.imagesNames      = sorted(os.listdir(self.rootImages)) [start_idx : end_idx]
         self.pointCloudNames  = sorted(os.listdir(self.rootPointclouds))[start_idx : end_idx]
-        self.annotationNames  = sorted(os.listdir(self.rootAnnotations))[start_idx : end_idx]
         self.calibrationNames = sorted(os.listdir(self.rootCalibration))[start_idx : end_idx]
+        if not self.skip_anno:
+            self.annotationNames  = sorted(os.listdir(self.rootAnnotations))[start_idx : end_idx]
         
     def __getitem__(self, index):
         imagePath = os.path.join(self.rootImages, self.imagesNames[index])
         pointcloudPath = os.path.join(self.rootPointclouds, self.pointCloudNames[index])
-        annotationPath = os.path.join(self.rootAnnotations, self.annotationNames[index])
         calibrationPath = os.path.join(self.rootCalibration, self.calibrationNames[index])
+
+        labels = None
+        if not self.skip_anno:
+            annotationPath = os.path.join(self.rootAnnotations, self.annotationNames[index])
+            labels = self.read_labels_annotations(annotationPath)
+            labels = self.convert_to_kitti_objects(labels)
 
         image = self.read_image_cv2(imagePath)
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         pointcloud = self.read_pointcloud_bin(pointcloudPath)
-        labels = self.read_labels_annotations(annotationPath)
-        labels = self.convert_to_kitti_objects(labels)
         calib = KittiCalibration(calib_path=calibrationPath)
 
         return image, pointcloud, labels, calib
 
     def __len__(self):
-        return len(self.annotationNames)
+        return len(self.pointCloudNames)
 
     def read_pointcloud_bin(self, path):
         # read .bin and convert to tensor

@@ -55,7 +55,7 @@ model: {
 
     loss_norm_type: NormByNumPositives
     # Postprocess
-    post_center_limit_range: [0, -39.68, -5, 69.12, 39.68, 5]
+    post_center_limit_range: [-0, -39.68, -5, 69.12, 39.68, 5]
     use_rotate_nms: false
     use_multi_class_nms: false
     nms_pre_max_size: 1000
@@ -164,7 +164,7 @@ train_config: {
   intra_op_parallelism_threads: 4
   steps: 296960 # 1856 steps per epoch * 160 epochs
   steps_per_eval: 9280 # 1856 steps per epoch * 5 epochs
-  save_checkpoints_secs : 1800 # half hour
+  save_checkpoints_secs : 900 # half hour
   save_summary_steps : 10
   enable_mixed_precision: false
   loss_scale_factor : 512.0

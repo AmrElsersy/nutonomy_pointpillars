@@ -681,16 +681,16 @@ def evaluate(config_path,
         example_tuple[8] = torch.from_numpy(example_tuple[8])
         example_tuple[9] = torch.from_numpy(example_tuple[9])
 
-        for key in example:
-            if torch.is_tensor(example[key]) or type(example[key] )==np.ndarray:
-                print(key,example[key].shape)
-        print("#############")
-        for i, ex in enumerate(example_tuple):
-            if torch.is_tensor(ex) or type(ex)==np.ndarray:
-                print(i, ex.shape)
-            else :
-                print(i, " = ", ex)
-        print("####################################################")
+        # for key in example:
+        #     if torch.is_tensor(example[key]) or type(example[key] )==np.ndarray:
+        #         print(key,example[key].shape)
+        # print("#############")
+        # for i, ex in enumerate(example_tuple):
+        #     if torch.is_tensor(ex) or type(ex)==np.ndarray:
+        #         print(i, ex.shape)
+        #     else :
+        #         print(i, " = ", ex)
+        # print("####################################################")
 
         if (example_tuple[6].size()[0] != input_cfg.batch_size):
             continue

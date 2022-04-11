@@ -107,11 +107,14 @@ def prep_pointcloud(input_dict,
         surfaces = box_np_ops.corner_to_surfaces_3d_jit(frustums)
         masks = points_in_convex_polygon_3d_jit(points, surfaces)
         points = points[masks.any(-1)]
+        print("refeence detection")
 
     if remove_outside_points and not lidar_input:
         image_shape = input_dict["image_shape"]
         points = box_np_ops.remove_outside_points(points, rect, Trv2c, P2,
                                                   image_shape)
+        print("remove oustide points")
+
     if remove_environment is True and training:
         selected = kitti.keep_arrays_by_name(gt_names, class_names)
         gt_boxes = gt_boxes[selected]
@@ -120,6 +123,7 @@ def prep_pointcloud(input_dict,
         if group_ids is not None:
             group_ids = group_ids[selected]
         points = prep.remove_points_outside_boxes(points, gt_boxes)
+        print("remove environment")
     if training:
         # print(gt_names)
         selected = kitti.drop_arrays_by_name(gt_names, ["DontCare"])
@@ -175,8 +179,10 @@ def prep_pointcloud(input_dict,
                 if remove_points_after_sample:
                     points = prep.remove_points_in_boxes(
                         points, sampled_gt_boxes)
+                    print("remove points after sample")
 
                 points = np.concatenate([sampled_points, points], axis=0)
+                # print("sampler")
         # unlabeled_mask = np.zeros((gt_boxes.shape[0], ), dtype=np.bool_)
         if without_reflectivity:
             used_point_axes = list(range(num_point_features))

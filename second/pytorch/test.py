@@ -61,21 +61,25 @@ def pointpillars_output_to_kitti_objects(predictions):
         kitti_objects.append(kitti_object)
     return kitti_objects
 
-def visualize(pointcloud, predictions):
+def visualize(pointcloud, predictions, image=None, calib=None):
     global visualizer
     predictions = pointpillars_output_to_kitti_objects(predictions)
 
-    visualizer.visualize_scene_bev(pointcloud=pointcloud, objects=predictions)
-    
+    if image is None:
+        visualizer.visualize_scene_bev(pointcloud=pointcloud, objects=predictions)
+    else:
+        visualizer.visualize_scene_2D(pointcloud, image, predictions, calib=calib)
+
     if visualizer.user_press == 27:
         cv2.destroyAllWindows()
         exit()
 
 def test(config_path='configs/pointpillars/car/xyres_16.proto',
          model_dir='/path/to/model_dir',
-         dataset_path='/home/kitti_original/training',
+         dataset_path='/home/kitti_original/testing',
+        #  dataset_path='/home/kitti_original/training',
         #  dataset_path='/home/kitti/dataset/kitti/training',
-         checkpoint='/home/kitti_original/voxelnet-117309.tckpt'
+         checkpoint='/home/nutonomy_pointpillars/voxelnet-352944.tckpt'
         ):
 
     model_dir = str(Path(model_dir).resolve())
@@ -117,7 +121,7 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
     dataset = KittiDataset(dataset_path)
 
     for i in range(len(dataset)):
-        _, pointcloud, labels, calib = dataset[i]
+        image, pointcloud, labels, calib = dataset[i]
         pointcloud = pointcloud.reshape(-1,4)
 
         # [0, -40, -3, 70.4, 40, 1]
@@ -167,11 +171,11 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
         #  4: 'Trv2c', 5: 'P2', 6: 'anchors', 7: 'anchors_mask'
         #  8: 'image_idx', 9: 'image_shape']
 
-        print('voxels ',example['voxels'].shape)
-        print('num_points ',example['num_points'].shape)
-        print('coordinates ',example['coordinates'].shape)
-        print('anchors ',example['anchors'].shape)
-        print('anchors_mask ',example['anchors_mask'].shape)
+        # print('voxels ',example['voxels'].shape)
+        # print('num_points ',example['num_points'].shape)
+        # print('coordinates ',example['coordinates'].shape)
+        # print('anchors ',example['anchors'].shape)
+        # print('anchors_mask ',example['anchors_mask'].shape)
 
         coordinates = np.pad(
                 coordinates, 
@@ -192,23 +196,23 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
 
         example_tuple = list(example.values())
 
-        for key in example:
-            if torch.is_tensor(example[key]) or type(example[key] )==np.ndarray:
-                print(key,example[key].shape)
-        print("#############")
-        for i, ex in enumerate(example_tuple):
-            if torch.is_tensor(ex) or type(ex)==np.ndarray:
-                print(i, ex.shape)
-            else :
-                print(i, " = ", ex)
-        print("####################################################")
+        # for key in example:
+        #     if torch.is_tensor(example[key]) or type(example[key] )==np.ndarray:
+        #         print(key,example[key].shape)
+        # print("#############")
+        # for i, ex in enumerate(example_tuple):
+        #     if torch.is_tensor(ex) or type(ex)==np.ndarray:
+        #         print(i, ex.shape)
+        #     else :
+        #         print(i, " = ", ex)
+        # print("####################################################")
      
         with torch.no_grad():
             predictions = predict_kitti_to_anno(
                 net, example_tuple, class_names, center_limit_range,
                 model_cfg.lidar_input, None)
 
-        visualize(pointcloud, predictions)
+        visualize(pointcloud, predictions, image, calib)
 
 if __name__ == '__main__':
     fire.Fire()
