@@ -119,5 +119,6 @@ def clip_3d_boxes(objects, calib):
         # if box center in the cliped region
         if is_bbox_in_boundary(point):
             cliped_objects.append(obj)
+    print("before ", len(objects), "  .. after ", len(cliped_objects))
     return cliped_objects
 

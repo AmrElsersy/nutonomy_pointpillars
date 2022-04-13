@@ -63,14 +63,14 @@ def create_kitti_info_file(data_path,
                            save_path=None,
                            create_trainval=False,
                            relative_path=True):
-    # train_img_ids = _read_imageset_file("./data/ImageSets/train.txt")
-    # val_img_ids = _read_imageset_file("./data/ImageSets/val.txt")
-    # trainval_img_ids = _read_imageset_file("./data/ImageSets/trainval.txt")
-    # test_img_ids = _read_imageset_file("./data/ImageSets/test.txt")
+    train_img_ids = _read_imageset_file("./data/ImageSets/train.txt")
+    val_img_ids = _read_imageset_file("./data/ImageSets/val.txt")
+    trainval_img_ids = _read_imageset_file("./data/ImageSets/trainval.txt")
+    test_img_ids = _read_imageset_file("./data/ImageSets/test.txt")
 
-    train_img_ids = _read_imageset_file("./data/ImageSets/train_ouster.txt")
-    val_img_ids = _read_imageset_file("./data/ImageSets/val_ouster.txt")
-    test_img_ids = _read_imageset_file("./data/ImageSets/test_ouster.txt")
+    # train_img_ids = _read_imageset_file("./data/ImageSets/train_ouster.txt")
+    # val_img_ids = _read_imageset_file("./data/ImageSets/val_ouster.txt")
+    # test_img_ids = _read_imageset_file("./data/ImageSets/test_ouster.txt")
 
     print("Generate info. this may take several minutes.")
     if save_path is None:
