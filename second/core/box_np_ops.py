@@ -637,6 +637,7 @@ def box_lidar_to_camera(data, r_rect, velo2cam):
 
 
 def remove_outside_points(points, rect, Trv2c, P2, image_shape):
+    print("remove_outside points")
     # 5x faster than remove_outside_points_v1(2ms vs 10ms)
     C, R, T = projection_matrix_to_CRT_kitti(P2)
     image_bbox = [0, 0, image_shape[1], image_shape[0]]

@@ -25,7 +25,7 @@ def _read_imageset_file(path):
     return [int(line) for line in lines]
 
 
-def _calculate_num_points_in_gt(data_path, infos, relative_path, remove_outside=True, num_features=4):
+def _calculate_num_points_in_gt(data_path, infos, relative_path, remove_outside=False, num_features=4):
     for info in infos:
         if relative_path:
             v_path = str(pathlib.Path(data_path) / info["velodyne_path"])
@@ -63,14 +63,14 @@ def create_kitti_info_file(data_path,
                            save_path=None,
                            create_trainval=False,
                            relative_path=True):
-    # train_img_ids = _read_imageset_file("./data/ImageSets/train.txt")
-    # val_img_ids = _read_imageset_file("./data/ImageSets/val.txt")
-    # trainval_img_ids = _read_imageset_file("./data/ImageSets/trainval.txt")
-    # test_img_ids = _read_imageset_file("./data/ImageSets/test.txt")
+    train_img_ids = _read_imageset_file("./data/ImageSets/train.txt")
+    val_img_ids = _read_imageset_file("./data/ImageSets/val.txt")
+    trainval_img_ids = _read_imageset_file("./data/ImageSets/trainval.txt")
+    test_img_ids = _read_imageset_file("./data/ImageSets/test.txt")
 
-    train_img_ids = _read_imageset_file("./data/ImageSets/train_ouster.txt")
-    val_img_ids = _read_imageset_file("./data/ImageSets/val_ouster.txt")
-    test_img_ids = _read_imageset_file("./data/ImageSets/test_ouster.txt")
+    # train_img_ids = _read_imageset_file("./data/ImageSets/train_ouster.txt")
+    # val_img_ids = _read_imageset_file("./data/ImageSets/val_ouster.txt")
+    # test_img_ids = _read_imageset_file("./data/ImageSets/test_ouster.txt")
 
     print("Generate info. this may take several minutes.")
     if save_path is None:
@@ -201,7 +201,7 @@ def create_groundtruth_database(data_path,
                                 database_save_path=None,
                                 db_info_save_path=None,
                                 relative_path=True,
-                                lidar_only=False,
+                                lidar_only=True,
                                 bev_only=False,
                                 coors_range=None):
     root_path = pathlib.Path(data_path)

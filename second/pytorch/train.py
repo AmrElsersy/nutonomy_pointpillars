@@ -537,16 +537,17 @@ def predict_kitti_to_anno(net,
             # write pred to file
             label_preds = preds_dict[4].detach().cpu().numpy() # label_preds
 
+            # print(box_preds_lidar.shape, box_preds.shape, scores.shape)
             anno = kitti.get_start_result_anno()
             num_example = 0
             for box, box_lidar, bbox, score, label in zip(
                     box_preds, box_preds_lidar, box_2d_preds, scores,
                     label_preds):
-                if not lidar_input:
-                    if bbox[0] > image_shape[1] or bbox[1] > image_shape[0]:
-                        continue
-                    if bbox[2] < 0 or bbox[3] < 0:
-                        continue
+                # if not lidar_input:
+                #     if bbox[0] > image_shape[1] or bbox[1] > image_shape[0]:
+                #         continue
+                #     if bbox[2] < 0 or bbox[3] < 0:
+                #         continue
                 # print(img_shape)
                 if center_limit_range is not None:
                     limit_range = np.array(center_limit_range)
@@ -585,6 +586,7 @@ def predict_kitti_to_anno(net,
         num_example = annos[-1]["name"].shape[0]
         annos[-1]["image_idx"] = np.array(
             [img_idx] * num_example, dtype=np.int64)
+    
     return annos
 
 
