@@ -1,0 +1,4 @@
+*.tckpt
+*.pyc
+second/__pycache__/
+save_weights*
