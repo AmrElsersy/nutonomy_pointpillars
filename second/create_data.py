@@ -25,7 +25,7 @@ def _read_imageset_file(path):
     return [int(line) for line in lines]
 
 
-def _calculate_num_points_in_gt(data_path, infos, relative_path, remove_outside=True, num_features=4):
+def _calculate_num_points_in_gt(data_path, infos, relative_path, remove_outside=False, num_features=4):
     for info in infos:
         if relative_path:
             v_path = str(pathlib.Path(data_path) / info["velodyne_path"])
@@ -201,7 +201,7 @@ def create_groundtruth_database(data_path,
                                 database_save_path=None,
                                 db_info_save_path=None,
                                 relative_path=True,
-                                lidar_only=False,
+                                lidar_only=True,
                                 bev_only=False,
                                 coors_range=None):
     root_path = pathlib.Path(data_path)
@@ -254,7 +254,7 @@ def create_groundtruth_database(data_path,
             assert coors_range is not None
             rbbox_lidar[:, 2] = coors_range[2]
             rbbox_lidar[:, 5] = coors_range[5] - coors_range[2]
-        
+
         group_dict = {}
         group_ids = np.full([bboxes.shape[0]], -1, dtype=np.int64)
         if "group_ids" in annos:
