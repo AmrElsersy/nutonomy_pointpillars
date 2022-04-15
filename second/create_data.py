@@ -254,7 +254,7 @@ def create_groundtruth_database(data_path,
             assert coors_range is not None
             rbbox_lidar[:, 2] = coors_range[2]
             rbbox_lidar[:, 5] = coors_range[5] - coors_range[2]
-        
+
         group_dict = {}
         group_ids = np.full([bboxes.shape[0]], -1, dtype=np.int64)
         if "group_ids" in annos:
