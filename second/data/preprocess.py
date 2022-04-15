@@ -366,5 +366,6 @@ def _read_and_prep_v9(info, root_path, num_point_features, prep_func, return_inp
     if return_input:
         example['pointcloud'] = points
         example['image_path'] = info['img_path']
+        example['gt_boxes'] = gt_boxes
     return example
 
