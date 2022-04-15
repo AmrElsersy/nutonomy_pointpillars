@@ -1,21 +1,13 @@
 # -*- coding: utf-8 -*-
 from cProfile import label
 from distutils.log import info
-import os
-import pathlib
-import pickle
-import shutil
-import time
-from functools import partial
+from genericpath import exists
 import sys
 from xml.dom import expatbuilder
 sys.path.append('../')
 from pathlib import Path
-import fire
 import numpy as np
-import torch
 from google.protobuf import text_format
-import torchplus
 from second.builder import target_assigner_builder, voxel_builder
 from second.protos import pipeline_pb2
 from second.pytorch.builder import (box_coder_builder, input_reader_builder,
@@ -33,49 +25,6 @@ from visualization.KittiUtils import BBox2D, BBox3D, KittiObject, KittiCalibrati
 from visualization.KittiVisualization import KittiVisualizer
 from visualization.KittiDataset import KittiDataset
 visualizer = KittiVisualizer()
-score_threshold = 0.2
-
-import gc
-gc.collect()
-torch.cuda.empty_cache()
-def pointpillars_output_to_kitti_objects(predictions):
-    predictions = predictions[0]
-    n = len(predictions['name'])
-    # print(len(predictions['score']), predictions['location'])
-
-    kitti_objects = []
-    for i in range(n):
-        bbox = predictions['bbox'][i]
-        dims = predictions['dimensions'][i]
-        location = predictions['location'][i]
-        rotation = predictions['rotation_y'][i]
-
-        # z coord is center in one coordinate and bottom in the other
-        location[2] -= location[2]/2
-
-        score = predictions['score'][i]
-        if score < score_threshold:
-            continue
-
-        bbox = BBox2D(bbox) # 0 1 2, 2 0 1, ... 1 0 2, 1 2 0
-        box3d = BBox3D(location[0], location[1], location[2], dims[1], dims[2], dims[0], -rotation)
-        kitti_object = KittiObject(box3d, 1, score, bbox)
-
-        kitti_objects.append(kitti_object)
-    return kitti_objects
-
-def visualize(pointcloud, predictions, image=None, calib=None):
-    global visualizer
-    # predictions = pointpillars_output_to_kitti_objects(predictions)
-
-    if image is None:
-        visualizer.visualize_scene_bev(pointcloud=pointcloud, objects=predictions)
-    else:
-        visualizer.visualize_scene_2D(pointcloud, image, predictions, calib=calib)
-
-    if visualizer.user_press == 27:
-        cv2.destroyAllWindows()
-        exit()
 
 def gt_boxes_to_kitti_objects(gt_boxes, rect, Trv2c):
     # convert boxes to lidar coordinates
@@ -85,11 +34,9 @@ def gt_boxes_to_kitti_objects(gt_boxes, rect, Trv2c):
         location = box[0:3]
         dims = box[3:6]
         rotation = box[6]
-
         box3d = BBox3D(location[0], location[1], location[2], dims[1], dims[2], dims[0], -rotation)
         kitti_object = KittiObject(box3d, 1)
         objects.append(kitti_object)
-
     return objects
 
 def test():
@@ -126,31 +73,27 @@ def test():
 
     for i in range(len(dataset)):
         example = dataset[i]
-        infos = dataset.dataset.kitti_infos[i]
-
-        pointcloud_processed = example['pointcloud']
-        
-        path_pointcloud = infos['velodyne_path']
-        path_image = infos['img_path']
-        
+        pointcloud_processed = example['pointcloud']        
         rect = example['rect']
         Trv2c = example['Trv2c']
         gt_boxes = example['gt_boxes']
         
+        # labels from kitti infos
         labels = gt_boxes_to_kitti_objects(gt_boxes, rect, Trv2c)
-        visualize(pointcloud_processed, labels)
-        for label in labels:
-            print('pos= ', label.bbox_3d.pos, '.. dims= ', label.bbox_3d.dims)
+        # visualization from pointpillars repo labels & pointcloud
+        visualizer.visualize_scene_bev(pointcloud=pointcloud_processed, objects=labels)
 
+        # visualization from my kitti_dataset labels & pointcloud
         image_idx = example['image_idx']
         image, pointcloud, labels2, calib = normal_dataset[image_idx]
         visualizer.visualize_scene_2D(pointcloud, image, [], labels=labels2, calib=calib)
-        print("Len of normal ", len(labels2), ' .. ', len(labels))
-        print("===================")
 
-        # eval example [0: 'voxels', 1: 'num_points', 2: 'coordinates', 3: 'rect'
-        #               4: 'Trv2c', 5: 'P2', 6: 'anchors', 7: 'anchors_mask'
-        #               8: 'image_idx', 9: 'image_shape']
+        if visualizer.user_press == 27:
+            cv2.destroyAllWindows()
+            exit()
+
+        print("My Dataset ", len(labels2), ' .. Repo dataset ', len(labels))
+        print("===================")
 
 if __name__ == '__main__':
     test()
