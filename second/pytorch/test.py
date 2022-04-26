@@ -77,9 +77,10 @@ def visualize(pointcloud, predictions, image=None, calib=None):
 def test(config_path='configs/pointpillars/car/xyres_16.proto',
          model_dir='/path/to/model_dir',
         #  dataset_path='/home/kitti_original/testing',
-         dataset_path='/home/kitti_original/training',
+         dataset_path='/home/kitti_original/testing',
         #  dataset_path='/home/kitti/dataset/kitti/training',
-         checkpoint='/home/nutonomy_pointpillars/voxelnet-44649.tckpt'
+        #  checkpoint='/home/nutonomy_pointpillars/voxelnet-44649.tckpt'
+        checkpoint=None
         ):
 
     model_dir = str(Path(model_dir).resolve())

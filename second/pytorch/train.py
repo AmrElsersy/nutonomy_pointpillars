@@ -791,11 +791,11 @@ def export_onnx(net, example, class_names, batch_image_shape,
     net.onnx_mode = True
 
     print('-------------- network readable visiual --------------')
-    torch.onnx.export(net, example1, "pfe.onnx", verbose=False, input_names=input_names, opset_version=6)
+    torch.onnx.export(net, example1, "pfe.onnx", verbose=False, input_names=input_names)
     print('pfe.onnx transfer success ...')
 
     rpn_input = torch.ones([1, 64, 496, 432], dtype=torch.float32, device=pillar_x.device)
-    torch.onnx.export(net.rpn, rpn_input, "rpn.onnx", verbose=False, opset_version=6)
+    torch.onnx.export(net.rpn, rpn_input, "rpn.onnx", verbose=False)
     print('rpn.onnx transfer success ...')
 
     return 0
