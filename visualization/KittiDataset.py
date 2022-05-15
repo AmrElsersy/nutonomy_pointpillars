@@ -29,8 +29,8 @@ class KittiDataset(Dataset):
         else:
             raise ValueError()
         self.skip_anno = False
-        if root.split('/')[-1] == 'testing':
-            self.skip_anno = True
+        # if root.split('/')[-1] == 'testing':
+        #     self.skip_anno = True
 
         self.rootPointclouds = os.path.join(self.root, "velodyne")
         self.rootImages = os.path.join(self.root, "image_2")

@@ -664,7 +664,7 @@ class VoxelNet(nn.Module):
     def get_global_step(self):
         return int(self.global_step.cpu().numpy()[0])
 
-    def forward(self, example):
+    def forward(self, example, image_path=None):
         """module's forward should always accept dict and return loss.
         """
         # training input [0:pillar_x, 1:pillar_y, 2:pillar_z, 3:pillar_i,
@@ -725,6 +725,14 @@ class VoxelNet(nn.Module):
             cls_targets = labels * cared.type_as(labels)
             cls_targets = cls_targets.unsqueeze(-1)
 
+
+            # ===================== IF UNMATCHED SIZE ======================== Sersy edit
+            _box_preds = box_preds.view(2, -1, 7)
+            if _box_preds.shape != reg_targets.shape:
+                print("IMAGE PATH ", image_path, " REG TARGET ", reg_targets.shape)
+                return False
+            # ===================== IF UNMATCHED SIZE ======================== Sersy edit
+
             loc_loss, cls_loss = create_loss(
                 self._loc_loss_ftor,
                 self._cls_loss_ftor,
@@ -739,6 +747,7 @@ class VoxelNet(nn.Module):
                 encode_background_as_zeros=self._encode_background_as_zeros,
                 box_code_size=self._box_coder.code_size,
             )
+
             loc_loss_reduced = loc_loss.sum() / batch_size_dev
             loc_loss_reduced *= self._loc_loss_weight
             cls_pos_loss, cls_neg_loss = _get_pos_neg_loss(cls_loss, labels)
@@ -1049,6 +1058,8 @@ class VoxelNet(nn.Module):
 
 
 def add_sin_difference(boxes1, boxes2):
+    # print("............................................")
+    # print(boxes1.shape, boxes2.shape)
     rad_pred_encoding = torch.sin(boxes1[..., -1:]) * torch.cos(
         boxes2[..., -1:])
     rad_tg_encoding = torch.cos(boxes1[..., -1:]) * torch.sin(boxes2[..., -1:])
@@ -1071,6 +1082,7 @@ def create_loss(loc_loss_ftor,
                 box_code_size=7):
     batch_size = int(box_preds.shape[0])
     box_preds = box_preds.view(batch_size, -1, box_code_size)
+
     if encode_background_as_zeros:
         cls_preds = cls_preds.view(batch_size, -1, num_class)
     else:

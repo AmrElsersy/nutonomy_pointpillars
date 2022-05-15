@@ -20,7 +20,7 @@ class KittiVisualizer:
         self.__scene_2D_mode = False
         self.scene_2D_width = 750
         self.ground_truth_color = (0,1,0) # green
-        self.thickness = 3
+        self.thickness = 1
         self.user_press = None
         self.confidence_score_thresh = 0.25 
         self.semantic_colors = {

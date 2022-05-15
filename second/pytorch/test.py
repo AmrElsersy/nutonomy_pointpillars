@@ -30,7 +30,7 @@ from visualization.KittiUtils import BBox2D, BBox3D, KittiObject, KittiCalibrati
 from visualization.KittiVisualization import KittiVisualizer
 from visualization.KittiDataset import KittiDataset
 visualizer = KittiVisualizer()
-score_threshold = 0.2
+score_threshold = 0.5
 
 import gc
 gc.collect()
@@ -61,14 +61,14 @@ def pointpillars_output_to_kitti_objects(predictions):
         kitti_objects.append(kitti_object)
     return kitti_objects
 
-def visualize(pointcloud, predictions, image=None, calib=None):
+def visualize(pointcloud, predictions, image=None, calib=None, labels=[]):
     global visualizer
     predictions = pointpillars_output_to_kitti_objects(predictions)
 
     if image is None:
         visualizer.visualize_scene_bev(pointcloud=pointcloud, objects=predictions)
     else:
-        visualizer.visualize_scene_2D(pointcloud, image, predictions, calib=calib)
+        visualizer.visualize_scene_2D(pointcloud, image, predictions, labels=labels, calib=calib)
 
     if visualizer.user_press == 27:
         cv2.destroyAllWindows()
@@ -77,8 +77,9 @@ def visualize(pointcloud, predictions, image=None, calib=None):
 def test(config_path='configs/pointpillars/car/xyres_16.proto',
          model_dir='/path/to/model_dir',
         #  dataset_path='/home/kitti_original/testing',
-         dataset_path='/home/kitti_original/testing',
+        #  dataset_path='/home/kitti_original/testing',
         #  dataset_path='/home/kitti/dataset/kitti/training',
+         dataset_path='/home/kitti/dataset/kitti/testing',
         #  checkpoint='/home/nutonomy_pointpillars/voxelnet-44649.tckpt'
         checkpoint=None
         ):
@@ -214,7 +215,7 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
                 model_cfg.lidar_input, None)
 
 
-        visualize(pointcloud, predictions, image, calib)
+        visualize(pointcloud, predictions, image, calib, labels)
 
 if __name__ == '__main__':
     fire.Fire()

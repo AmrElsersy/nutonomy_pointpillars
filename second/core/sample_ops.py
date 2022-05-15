@@ -239,7 +239,9 @@ class DataBaseSamplerV2:
         gt_boxes_bv = box_np_ops.center_to_corner_box2d(
             gt_boxes[:, 0:2], gt_boxes[:, 3:5], gt_boxes[:, 6])
 
+        # print("beforesampling ", [i["box3d_lidar"] for i in sampled])
         sp_boxes = np.stack([i["box3d_lidar"] for i in sampled], axis=0)
+        # print("after sampling ", sp_boxes)
 
         valid_mask = np.zeros([gt_boxes.shape[0]], dtype=np.bool_)
         valid_mask = np.concatenate(

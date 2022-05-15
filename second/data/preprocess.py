@@ -317,7 +317,7 @@ def _read_and_prep_v9(info, root_path, num_point_features, prep_func, return_inp
     v_path = pathlib.Path(root_path) / info['velodyne_path']
     # v_path = v_path.parent.parent / (
     #     v_path.parent.stem + "_reduced") / v_path.name
-
+    # print(v_path)
     points = np.fromfile(
         str(v_path), dtype=np.float32,
         count=-1).reshape([-1, num_point_features])
@@ -363,6 +363,8 @@ def _read_and_prep_v9(info, root_path, num_point_features, prep_func, return_inp
     if "anchors_mask" in example:
         example["anchors_mask"] = example["anchors_mask"].astype(np.uint8)
 
+# ===================================== Add image path for debuggging ==========================
+    example['image_path'] = info['img_path']
     if return_input:
         example['pointcloud'] = points
         example['image_path'] = info['img_path']

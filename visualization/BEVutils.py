@@ -20,10 +20,10 @@ y (used with x lidar)
 
 # =========================  Config ===============================
 boundary = {
-    "minX": -80,
-    "maxX": 80,
-    "minY": -39,
-    "maxY": 39,
+    "minX": -30,
+    "maxX": 30,
+    "minY": -25,
+    "maxY": 25,
     "minZ": -3,
     "maxZ": 1
 }
