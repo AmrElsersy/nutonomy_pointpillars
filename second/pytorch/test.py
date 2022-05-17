@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
-import pathlib
-import pickle
-import shutil
+import enum
 import time
-from functools import partial
-import sys
-from xml.dom import expatbuilder
+import sys, os
 sys.path.append('../')
 from pathlib import Path
 import fire
@@ -16,42 +11,36 @@ from google.protobuf import text_format
 import torchplus
 from second.builder import target_assigner_builder, voxel_builder
 from second.protos import pipeline_pb2
-from second.pytorch.builder import (box_coder_builder, input_reader_builder,
-                                    lr_scheduler_builder, optimizer_builder,
-                                    second_builder)
-from second.pytorch.train import get_paddings_indicator, example_convert_to_torch, predict_kitti_to_anno
+from second.pytorch.builder import (box_coder_builder, second_builder)
+from second.pytorch.train import example_convert_to_torch, predict_kitti_to_anno
 
 # ==========================
 sys.path.append('../../')
-
 from second.core import box_np_ops
 import cv2
-from visualization.KittiUtils import BBox2D, BBox3D, KittiObject, KittiCalibration
+from visualization.KittiUtils import BBox2D, BBox3D, KittiObject, KittiCalibration, label_to_class_name
 from visualization.KittiVisualization import KittiVisualizer
 from visualization.KittiDataset import KittiDataset
-visualizer = KittiVisualizer()
-score_threshold = 0.5
 
-import gc
-gc.collect()
+visualizer = KittiVisualizer()
 torch.cuda.empty_cache()
+
+classes_names = {
+    "Car": 0,
+    "Truck": 1,
+    "Cyclist": 2
+}
+
+classes_score_threshold = {
+    "Car": 0.5,
+    "Truck": 0.3,
+    "Cyclist": 0.2
+}
+
 def pointpillars_output_to_kitti_objects(predictions):
     predictions = predictions[0]
     n = len(predictions['name'])
-    # print(len(predictions['score']), predictions['location'])
-    # print(predictions.keys())
 
-    classes_names = {
-        "Car": 0,
-        "Truck": 1,
-        "Cyclist": 2
-    }
-
-    classes_score_threshold = {
-        "Car": 0.5,
-        "Truck": 0.4,
-        "Cyclist": 0.25
-    }
 
     kitti_objects = []
     for i in range(n):
@@ -76,10 +65,23 @@ def pointpillars_output_to_kitti_objects(predictions):
         kitti_objects.append(kitti_object)
     return kitti_objects
 
-def visualize(pointcloud, predictions, image=None, calib=None, labels=[]):
+def visualize(pointcloud, predictions, image=None, calib=None, labels=[], print_detections=False):
     global visualizer
 
     predictions = pointpillars_output_to_kitti_objects(predictions)
+
+    if(print_detections):
+        num_predictions = [0, 0, 0]
+        for det in predictions:
+            num_predictions[det.label] += 1
+        
+        label_to_name = {}
+        for key in classes_names:
+            label_to_name[classes_names[key]] = key
+
+        print("Detected: ")
+        for i, n_pred in enumerate(num_predictions):
+            print(n_pred, " ", label_to_name[i])
 
     if image is None:
         visualizer.visualize_scene_bev(pointcloud=pointcloud, objects=predictions)
@@ -92,23 +94,20 @@ def visualize(pointcloud, predictions, image=None, calib=None, labels=[]):
 
 def test(config_path='configs/pointpillars/car/xyres_16.proto',
          model_dir='/path/to/model_dir',
-        #  dataset_path='/home/kitti_original/training',
-         dataset_path='/home/kitti_original/testing',
-        #  dataset_path='/home/kitti/dataset/kitti/training',
-        #  dataset_path='/home/kitti/dataset/kitti/testing',
         #  checkpoint='/home/nutonomy_pointpillars/voxelnet-44649.tckpt'
-        checkpoint=None
+        checkpoint=None,
+        mode="testing" # can be training or testing to open the training/testing folder in the dataset specified in the config
         ):
 
     model_dir = str(Path(model_dir).resolve())
 
-    if isinstance(config_path, str):
-        config = pipeline_pb2.TrainEvalPipelineConfig()
-        with open(config_path, "r") as f:
-            proto_str = f.read()
-            text_format.Merge(proto_str, config)
-    else:
-        config = config_path
+    config = pipeline_pb2.TrainEvalPipelineConfig()
+    with open(config_path, "r") as f:
+        proto_str = f.read()
+        text_format.Merge(proto_str, config)
+
+    dataset_path = str(config.train_input_reader.kitti_root_path)
+    dataset_path = os.path.join(dataset_path, mode)
 
     input_cfg = config.eval_input_reader
     model_cfg = config.model.second
@@ -231,7 +230,7 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
                 model_cfg.lidar_input, None)
 
 
-        visualize(pointcloud, predictions, image, calib, labels)
+        visualize(pointcloud, predictions, image, calib, labels, print_detections=True)
 
 if __name__ == '__main__':
     fire.Fire()

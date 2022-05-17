@@ -23,16 +23,18 @@ class KittiVisualizer:
         self.thickness = 1
         self.user_press = None
         self.confidence_score_thresh = 0.25 
+        # for bev only
         self.semantic_colors = {
             0: (255,0,0),
             1: (0,0,255),
             2: (0,255,0),
             3: (255,0,255)
         }
+
         self.colors = [
-            (168, 50, 162),
-            (0,50,255),
-            (255,255,51),
+            (255, 10, 0),
+            (255,0 , 255),
+            (255,255,0),
         ]
 
     def visualize_scene_3D(self, pointcloud, objects, labels=None, calib=None):
@@ -151,6 +153,9 @@ class KittiVisualizer:
         # 3D Boxes of model output
         for obj in objects:
             color = self.__get_box_color(obj.label)
+            color = list(color)
+            color[0], color[2] = color[2], color[0] # swap to converrt from BGR to RGB
+            color = tuple(color)
             self.__draw_bev_box3d(BEV, obj.bbox_3d, color, calib)
 
         # # 3D Boxes of dataset labels 
@@ -160,7 +165,6 @@ class KittiVisualizer:
                 color = [c * 255 for c in self.ground_truth_color]
                 self.__draw_bev_box3d(BEV, obj.bbox_3d, color, calib)
 
-        print('BEV.shape',BEV.shape)
         if self.__scene_2D_mode:
             return BEV 
 
