@@ -310,6 +310,7 @@ def train(config_path,
                 input = [pillar_x, pillar_y, pillar_z, pillar_i, num_points_per_pillar,
                          x_sub_shaped, y_sub_shaped, mask, coors, anchors, labels, reg_targets]
 
+                # print(len(dataloader.dataset), dataloader.batch_size)
                 ret_dict = net(input, image_path)
 
                 if ret_dict == False:

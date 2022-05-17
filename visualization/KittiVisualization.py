@@ -25,11 +25,16 @@ class KittiVisualizer:
         self.confidence_score_thresh = 0.25 
         self.semantic_colors = {
             0: (255,0,0),
-            1: (0,255,0),
-            2: (0,0,255),
+            1: (0,0,255),
+            2: (0,255,0),
             3: (255,0,255)
         }
-        
+        self.colors = [
+            (168, 50, 162),
+            (0,50,255),
+            (255,255,51),
+        ]
+
     def visualize_scene_3D(self, pointcloud, objects, labels=None, calib=None):
         """
             Visualize the Scene including Point Cloud & 3D Boxes 
@@ -411,13 +416,7 @@ class KittiVisualizer:
         if type(class_id) == str:
             class_id = class_name_to_label(class_id)
 
-        colors = [
-            (168, 50, 162),
-            (0,205,255),
-            (255,255,51),
-        ]
-
-        return colors[class_id]
+        return self.colors[class_id]
 
     def __to_numpy(self, pointcloud):
         if not isinstance(pointcloud, np.ndarray):

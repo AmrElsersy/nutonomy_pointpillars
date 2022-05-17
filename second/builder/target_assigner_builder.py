@@ -22,10 +22,13 @@ def build(target_assigner_config, bv_range, box_coder):
         raise ValueError('input_reader_config not of type '
                          'input_reader_pb2.InputReader.')
     anchor_cfg = target_assigner_config.anchor_generators
+    # print("anchor config ", anchor_cfg)
     anchor_generators = []
     for a_cfg in anchor_cfg:
         anchor_generator = anchor_generator_builder.build(a_cfg)
         anchor_generators.append(anchor_generator)
+    
+    # print("anchor_generators ",anchor_generators)
     similarity_calc = similarity_calculator_builder.build(
         target_assigner_config.region_similarity_calculator)
     positive_fraction = target_assigner_config.sample_positive_fraction

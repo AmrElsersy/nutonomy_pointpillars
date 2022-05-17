@@ -39,6 +39,19 @@ def pointpillars_output_to_kitti_objects(predictions):
     predictions = predictions[0]
     n = len(predictions['name'])
     # print(len(predictions['score']), predictions['location'])
+    # print(predictions.keys())
+
+    classes_names = {
+        "Car": 0,
+        "Truck": 1,
+        "Cyclist": 2
+    }
+
+    classes_score_threshold = {
+        "Car": 0.5,
+        "Truck": 0.4,
+        "Cyclist": 0.25
+    }
 
     kitti_objects = []
     for i in range(n):
@@ -46,23 +59,26 @@ def pointpillars_output_to_kitti_objects(predictions):
         dims = predictions['dimensions'][i]
         location = predictions['location'][i]
         rotation = predictions['rotation_y'][i]
+        label_class = predictions["name"][i]
+        score = predictions['score'][i]
 
         # z coord is center in one coordinate and bottom in the other
         location[2] -= location[2]/2
 
-        score = predictions['score'][i]
-        if score < score_threshold:
+        if score < classes_score_threshold[label_class]:
+            # print("skipped ", label_class, ' with score=',score)
             continue
 
         bbox = BBox2D(bbox) # 0 1 2, 2 0 1, ... 1 0 2, 1 2 0
         box3d = BBox3D(location[0], location[1], location[2], dims[1], dims[2], dims[0], -rotation)
-        kitti_object = KittiObject(box3d, 1, score, bbox)
+        kitti_object = KittiObject(box3d, classes_names[label_class], score, bbox)
 
         kitti_objects.append(kitti_object)
     return kitti_objects
 
 def visualize(pointcloud, predictions, image=None, calib=None, labels=[]):
     global visualizer
+
     predictions = pointpillars_output_to_kitti_objects(predictions)
 
     if image is None:
@@ -76,10 +92,10 @@ def visualize(pointcloud, predictions, image=None, calib=None, labels=[]):
 
 def test(config_path='configs/pointpillars/car/xyres_16.proto',
          model_dir='/path/to/model_dir',
-        #  dataset_path='/home/kitti_original/testing',
-        #  dataset_path='/home/kitti_original/testing',
+        #  dataset_path='/home/kitti_original/training',
+         dataset_path='/home/kitti_original/testing',
         #  dataset_path='/home/kitti/dataset/kitti/training',
-         dataset_path='/home/kitti/dataset/kitti/testing',
+        #  dataset_path='/home/kitti/dataset/kitti/testing',
         #  checkpoint='/home/nutonomy_pointpillars/voxelnet-44649.tckpt'
         checkpoint=None
         ):

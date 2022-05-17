@@ -5,7 +5,7 @@ model: {
       voxel_size : [0.16, 0.16, 4]
       max_number_of_points_per_voxel : 100
     }
-    num_class: 1
+    num_class: 3
     voxel_feature_extractor: {
       module_class_name: "PillarFeatureNet"
       num_filters: [64]
@@ -83,7 +83,27 @@ model: {
            matched_threshold : 0.6
            unmatched_threshold : 0.45
          }
-       }
+        }
+      anchor_generators: {
+         anchor_generator_stride: {
+           sizes: [2.4560939, 6.73778078, 2.73004906] # wlh
+           strides: [0.32, 0.32, 0.0] # if generate only 1 z_center, z_stride will be ignored
+           offsets: [-29.84, -39.52, -1.78] # origin_offset + strides / 2
+           rotations: [0, 1.57] # 0, pi/2
+           matched_threshold : 0.6
+           unmatched_threshold : 0.45
+         }
+        }
+      anchor_generators: {
+        anchor_generator_stride: {
+          sizes: [0.6, 1.76, 1.73] # wlh
+          strides: [0.16, 0.16, 0.0] # if generate only 1 z_center, z_stride will be ignored
+           offsets: [-29.92, -39.6, -1.78] # origin_offset + strides / 2
+          rotations: [0, 1.57] # 0, pi/2
+          matched_threshold : 0.5
+          unmatched_threshold : 0.35
+        }
+      }
 
       sample_positive_fraction : -1
       sample_size : 512
@@ -98,7 +118,7 @@ model: {
 
 train_input_reader: {
   #record_file_path: "/data/sets/kitti_second/kitti_train.tfrecord"
-  class_names: ["Car"]
+  class_names: ["Car", "Truck", "Cyclist"]
   max_num_epochs : 160
   batch_size: 2
   prefetch_size : 25
@@ -174,7 +194,7 @@ train_config: {
 
 eval_input_reader: {
   #record_file_path: "/data/sets/kitti_second/kitti_val.tfrecord"
-  class_names: ["Car"]
+  class_names: ["Car", "Truck", "Cyclist"]
   batch_size: 2
   max_num_epochs : 160
   prefetch_size : 25
