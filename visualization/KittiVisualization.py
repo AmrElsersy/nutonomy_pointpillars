@@ -1,13 +1,14 @@
-import imp
+# from mayavi import mlab
+# mlab.options.offscreen = True
+
 import numpy as np
 from math import sin, cos, radians
 # from .KittiDataset import KittiDataset
 from visualization.KittiUtils import *
 import visualization.BEVutils as BEVutils
-import cv2, PIL
 import os, sys
-from torch import tensor
-# from mayavi import mlab
+import cv2, PIL
+
 
 from PIL import Image
 from PIL import ImageDraw
@@ -217,7 +218,8 @@ class KittiVisualizer:
 
     def __show_3D(self):
         # mlab.show(stop=True)
-        pass
+        print("Called show")
+        # pass
 
     def __show_2D(self):
         print("**************** Press n for next example ... Press ESC to quit *****************")
@@ -227,7 +229,7 @@ class KittiVisualizer:
         pointcloud = self.__to_numpy(pointcloud)
         # mlab.points3d(pointcloud[:,0], pointcloud[:,1], pointcloud[:,2], 
         #             colormap='gnuplot', scale_factor=1, mode="point",  figure=self.figure)
-        self.__draw_axes()
+        # self.__draw_axes()
 
     def visualize_3d_bbox(self, bbox: BBox3D, color=(0,1,0), calib=None):
         corners = self.__convert_3d_bbox_to_corners(bbox, calib)
@@ -402,7 +404,7 @@ class KittiVisualizer:
             draw_.line(xy=[(corner1[x], corner1[y]), (corner2[x], corner2[y])], \
                 fill=clr, width=self.thickness)           
 
-    def __draw_text_2D(self, text, point, bbox_volume, color=(255, 255, 255), font_scale=0.4, thickness=2, font=cv2.FONT_HERSHEY_SIMPLEX):
+    def __draw_text_2D(self, text, point, bbox_volume, color=(255, 255, 255), font_scale=0.4, thickness=2):
         # cv2.putText(self.current_image, text, point, font, font_scale, color, thickness)
         draw = ImageDraw.Draw(self.current_image, mode='RGB')
         # font = ImageFont.truetype('Extras/arial.ttf', int(bbox_volume))

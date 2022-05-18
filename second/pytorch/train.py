@@ -4,6 +4,7 @@ import os
 import pathlib
 import pickle
 import shutil
+from tabnanny import check
 import time
 from functools import partial
 import sys
@@ -107,7 +108,9 @@ def train(config_path,
           create_folder=False,
           display_step=50,
           summary_step=5,
-          pickle_result=True):
+          pickle_result=True,
+          # checkpoint to load inital weights from it, if None, model will read the last checkpoint in model_dir path
+          checkpoint=None):
     """train a VoxelNet model specified by a config file.
     """
     if create_folder:
@@ -130,8 +133,6 @@ def train(config_path,
     eval_input_cfg = config.eval_input_reader
     model_cfg = config.model.second
     train_cfg = config.train_config
-
-    class_names = list(input_cfg.class_names)
     #########################
     # Build Voxel Generator
     #########################
@@ -147,10 +148,8 @@ def train(config_path,
     # Build NetWork
     ######################
     center_limit_range = model_cfg.post_center_limit_range
-    # net = second_builder.build(model_cfg, voxel_generator, target_assigner)
     net = second_builder.build(model_cfg, voxel_generator, target_assigner, input_cfg.batch_size)
     net.cuda()
-    # net_train = torch.nn.DataParallel(net).cuda()
     print("num_trainable parameters:", len(list(net.parameters())))
     # for n, p in net.named_parameters():
     #     print(n, p.shape)
@@ -158,8 +157,13 @@ def train(config_path,
     # Build Optimizer
     ######################
     # we need global_step to create lr_scheduler, so restore net first.
-    torchplus.train.try_restore_latest_checkpoints(model_dir, [net])
-    gstep = net.get_global_step() - 1
+    if checkpoint is None:
+        torchplus.train.try_restore_latest_checkpoints(model_dir, [net])
+        gstep = net.get_global_step() - 1
+    else:
+        torchplus.train.restore(checkpoint, net) 
+        gstep = -1
+    
     optimizer_cfg = train_cfg.optimizer
     if train_cfg.enable_mixed_precision:
         net.half()
@@ -315,91 +319,90 @@ def train(config_path,
 
                 if ret_dict == False:
                     print("Skip .. differenct size reg_targets & box_preds")
-                    # continue
-                else:
-                    assert 10 == len(ret_dict), "something write with training output size!"
 
-                    cls_preds = ret_dict[5]
-                    loss = ret_dict[0].mean()
-                    cls_loss_reduced = ret_dict[7].mean()
-                    loc_loss_reduced = ret_dict[8].mean()
-                    cls_pos_loss = ret_dict[3]
-                    cls_neg_loss = ret_dict[4]
-                    loc_loss = ret_dict[2]
-                    cls_loss = ret_dict[1]
-                    dir_loss_reduced = ret_dict[6]
-                    cared = ret_dict[9]
-                    labels = example_tuple[8]
-                    if train_cfg.enable_mixed_precision:
-                        loss *= loss_scale
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(net.parameters(), 10.0)
-                    mixed_optimizer.step()
-                    mixed_optimizer.zero_grad()
-                    net.update_global_step()
-                    net_metrics = net.update_metrics(cls_loss_reduced,
-                                                    loc_loss_reduced, cls_preds,
-                                                    labels, cared)
+                assert 10 == len(ret_dict), "something write with training output size!"
 
-                    step_time = (time.time() - t)
-                    t = time.time()
-                    metrics = {}
-                    num_pos = int((labels > 0)[0].float().sum().cpu().numpy())
-                    num_neg = int((labels == 0)[0].float().sum().cpu().numpy())
-                    # if 'anchors_mask' not in example_torch:
-                    #     num_anchors = example_torch['anchors'].shape[1]
-                    # else:
-                    #     num_anchors = int(example_torch['anchors_mask'][0].sum())
-                    num_anchors = int(example_tuple[7][0].sum())
-                    global_step = net.get_global_step()
-                    if global_step % display_step == 0:
-                        loc_loss_elem = [
-                            float(loc_loss[:, :, i].sum().detach().cpu().numpy() /
-                                batch_size) for i in range(loc_loss.shape[-1])
-                        ]
-                        metrics["step"] = global_step
-                        metrics["steptime"] = step_time
-                        metrics.update(net_metrics)
-                        metrics["loss"] = {}
-                        metrics["loss"]["loc_elem"] = loc_loss_elem
-                        metrics["loss"]["cls_pos_rt"] = float(cls_pos_loss.detach().cpu().numpy())
-                        metrics["loss"]["cls_neg_rt"] = float(cls_neg_loss.detach().cpu().numpy())
-                        # if unlabeled_training:
-                        #     metrics["loss"]["diff_rt"] = float(
-                        #         diff_loc_loss_reduced.detach().cpu().numpy())
-                        if model_cfg.use_direction_classifier:
-                            metrics["loss"]["dir_rt"] = float(dir_loss_reduced.detach().cpu().numpy())
+                cls_preds = ret_dict[5]
+                loss = ret_dict[0].mean()
+                cls_loss_reduced = ret_dict[7].mean()
+                loc_loss_reduced = ret_dict[8].mean()
+                cls_pos_loss = ret_dict[3]
+                cls_neg_loss = ret_dict[4]
+                loc_loss = ret_dict[2]
+                cls_loss = ret_dict[1]
+                dir_loss_reduced = ret_dict[6]
+                cared = ret_dict[9]
+                labels = example_tuple[8]
+                if train_cfg.enable_mixed_precision:
+                    loss *= loss_scale
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(net.parameters(), 10.0)
+                mixed_optimizer.step()
+                mixed_optimizer.zero_grad()
+                net.update_global_step()
+                net_metrics = net.update_metrics(cls_loss_reduced,
+                                                loc_loss_reduced, cls_preds,
+                                                labels, cared)
+
+                step_time = (time.time() - t)
+                t = time.time()
+                metrics = {}
+                num_pos = int((labels > 0)[0].float().sum().cpu().numpy())
+                num_neg = int((labels == 0)[0].float().sum().cpu().numpy())
+                # if 'anchors_mask' not in example_torch:
+                #     num_anchors = example_torch['anchors'].shape[1]
+                # else:
+                #     num_anchors = int(example_torch['anchors_mask'][0].sum())
+                num_anchors = int(example_tuple[7][0].sum())
+                global_step = net.get_global_step()
+                if global_step % display_step == 0:
+                    loc_loss_elem = [
+                        float(loc_loss[:, :, i].sum().detach().cpu().numpy() /
+                            batch_size) for i in range(loc_loss.shape[-1])
+                    ]
+                    metrics["step"] = global_step
+                    metrics["steptime"] = step_time
+                    metrics.update(net_metrics)
+                    metrics["loss"] = {}
+                    metrics["loss"]["loc_elem"] = loc_loss_elem
+                    metrics["loss"]["cls_pos_rt"] = float(cls_pos_loss.detach().cpu().numpy())
+                    metrics["loss"]["cls_neg_rt"] = float(cls_neg_loss.detach().cpu().numpy())
+                    # if unlabeled_training:
+                    #     metrics["loss"]["diff_rt"] = float(
+                    #         diff_loc_loss_reduced.detach().cpu().numpy())
+                    if model_cfg.use_direction_classifier:
+                        metrics["loss"]["dir_rt"] = float(dir_loss_reduced.detach().cpu().numpy())
 
 
-                        metrics["num_vox"] = int(example_tuple[0].shape[0])
-                        metrics["num_pos"] = int(num_pos)
-                        metrics["num_neg"] = int(num_neg)
-                        metrics["num_anchors"] = int(num_anchors)
-                        metrics["lr"] = float(mixed_optimizer.param_groups[0]['lr'])
-                        metrics["image_idx"] = example_tuple[11][0]
-                        flatted_metrics = flat_nested_json_dict(metrics)
-                        flatted_summarys = flat_nested_json_dict(metrics, "/")
-                        for k, v in flatted_summarys.items():
-                            if isinstance(v, (list, tuple)):
-                                v = {str(i): e for i, e in enumerate(v)}
-                                writer.add_scalars(k, v, global_step)
-                            else:
-                                writer.add_scalar(k, v, global_step)
-                        metrics_str_list = []
-                        for k, v in flatted_metrics.items():
-                            if isinstance(v, float):
-                                metrics_str_list.append(f"{k}={v:.3}")
-                            elif isinstance(v, (list, tuple)):
-                                if v and isinstance(v[0], float):
-                                    v_str = ', '.join([f"{e:.3}" for e in v])
-                                    metrics_str_list.append(f"{k}=[{v_str}]")
-                                else:
-                                    metrics_str_list.append(f"{k}={v}")
+                    metrics["num_vox"] = int(example_tuple[0].shape[0])
+                    metrics["num_pos"] = int(num_pos)
+                    metrics["num_neg"] = int(num_neg)
+                    metrics["num_anchors"] = int(num_anchors)
+                    metrics["lr"] = float(mixed_optimizer.param_groups[0]['lr'])
+                    metrics["image_idx"] = example_tuple[11][0]
+                    flatted_metrics = flat_nested_json_dict(metrics)
+                    flatted_summarys = flat_nested_json_dict(metrics, "/")
+                    for k, v in flatted_summarys.items():
+                        if isinstance(v, (list, tuple)):
+                            v = {str(i): e for i, e in enumerate(v)}
+                            writer.add_scalars(k, v, global_step)
+                        else:
+                            writer.add_scalar(k, v, global_step)
+                    metrics_str_list = []
+                    for k, v in flatted_metrics.items():
+                        if isinstance(v, float):
+                            metrics_str_list.append(f"{k}={v:.3}")
+                        elif isinstance(v, (list, tuple)):
+                            if v and isinstance(v[0], float):
+                                v_str = ', '.join([f"{e:.3}" for e in v])
+                                metrics_str_list.append(f"{k}=[{v_str}]")
                             else:
                                 metrics_str_list.append(f"{k}={v}")
-                        log_str = ', '.join(metrics_str_list)
-                        print(log_str, file=logf)
-                        print(log_str)
+                        else:
+                            metrics_str_list.append(f"{k}={v}")
+                    log_str = ', '.join(metrics_str_list)
+                    print(log_str, file=logf)
+                    print(log_str)
                 ckpt_elasped_time = time.time() - ckpt_start_time
                 if ckpt_elasped_time > train_cfg.save_checkpoints_secs:
                     torchplus.train.save_models(model_dir, [net, optimizer], net.get_global_step())
