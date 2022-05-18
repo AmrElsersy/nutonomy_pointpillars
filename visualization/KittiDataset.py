@@ -12,7 +12,7 @@ from visualization.KittiUtils import *
 from PIL import Image
 
 class KittiDataset(Dataset):
-    def __init__(self, root="../kitti/testing", mode='train', transform = None, stereo_mode=False):
+    def __init__(self, root="../kitti/testing", mode='train', stereo_mode=False, return_test_annotations=False):
         self.root = root
         self.stereo_mode = stereo_mode
         self.mode = mode
@@ -28,8 +28,10 @@ class KittiDataset(Dataset):
         else:
             raise ValueError()
         self.skip_anno = False
-        if root.split('/')[-1] == 'testing':
-            self.skip_anno = True
+
+        if not return_test_annotations:
+            if root.split('/')[-1] == 'testing':
+                self.skip_anno = True
 
         self.rootPointclouds = os.path.join(self.root, "velodyne")
         self.rootImages = os.path.join(self.root, "image_2")

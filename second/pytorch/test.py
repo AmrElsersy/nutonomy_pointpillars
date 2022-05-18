@@ -136,7 +136,10 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
 
     net.eval()
 
-    dataset = KittiDataset(dataset_path)
+    if mode == "testing":
+        dataset = KittiDataset(dataset_path, return_test_annotations=True)
+    else:
+        dataset = KittiDataset(dataset_path)
 
     for i in range(len(dataset)):
         image, pointcloud, labels, calib = dataset[i]
@@ -154,6 +157,7 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
         feature_map_size = [*feature_map_size, 1][::-1]
         # [352, 400]
 
+        t1 = time.time()
         voxels, coordinates, num_points = voxel_generator.generate(
             pointcloud, max_voxels)
 
@@ -230,7 +234,8 @@ def test(config_path='configs/pointpillars/car/xyres_16.proto',
                 net, example_tuple, class_names, center_limit_range,
                 model_cfg.lidar_input, None)
 
-
+        t = time.time()
+        print(round((t-t1)*1000, 2), ' ms')
         visualize(pointcloud, predictions, image, calib, labels, print_detections=True)
 
 if __name__ == '__main__':
