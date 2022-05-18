@@ -230,23 +230,38 @@ class KittiCalibration:
 
 # ================================================
 def class_name_to_label(classname):
-    class_to_label = {
-        'Pedestrian': 0,
-        'Person_sitting': 0,
+    # class_to_label = {
+    #     'Pedestrian': 0,
+    #     'Person_sitting': 0,
 
-        'Car': 1,
+    #     'Car': 1,
+    #     'Van': 1,
+    #     'Truck': 1,
+
+    #     'Cyclist': 2,
+        
+    #     'Misc' : 0,
+    #     'Tram' : 0
+    # }
+    class_to_label = {
+        'Car': 0,
+
         'Van': 1,
         'Truck': 1,
 
         'Cyclist': 2,
-        
-        'Misc' : 0,
-        'Tram' : 0
+
+        # NOT IMPORTANT
+        'Pedestrian': 3,
+        'Person_sitting': 3,
+        'Misc' : 3,
+        'Tram' : 3
     }
+
     return class_to_label[classname]
 
 def label_to_class_name(label):
-    class_list = ["Pedestrian", "Car", "Cyclist"]
+    class_list = ["Car", "Truck", "Cyclist"]
     return class_list[label]
 
 def pillars_labels_to_sfa_labels(label):

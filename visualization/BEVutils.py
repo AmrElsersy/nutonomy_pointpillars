@@ -20,10 +20,10 @@ y (used with x lidar)
 
 # =========================  Config ===============================
 boundary = {
-    "minX": -40,
-    "maxX": 40,
-    "minY": -39,
-    "maxY": 39,
+    "minX": -30,
+    "maxX": 30,
+    "minY": -25,
+    "maxY": 25,
     "minZ": -3,
     "maxZ": 1
 }
@@ -119,6 +119,6 @@ def clip_3d_boxes(objects, calib):
         # if box center in the cliped region
         if is_bbox_in_boundary(point):
             cliped_objects.append(obj)
-    print("before ", len(objects), "  .. after ", len(cliped_objects))
+    # print("before ", len(objects), "  .. after ", len(cliped_objects))
     return cliped_objects
 

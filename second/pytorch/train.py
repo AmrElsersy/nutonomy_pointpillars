@@ -4,6 +4,7 @@ import os
 import pathlib
 import pickle
 import shutil
+from tabnanny import check
 import time
 from functools import partial
 import sys
@@ -107,7 +108,9 @@ def train(config_path,
           create_folder=False,
           display_step=50,
           summary_step=5,
-          pickle_result=True):
+          pickle_result=True,
+          # checkpoint to load inital weights from it, if None, model will read the last checkpoint in model_dir path
+          checkpoint=None):
     """train a VoxelNet model specified by a config file.
     """
     if create_folder:
@@ -130,8 +133,6 @@ def train(config_path,
     eval_input_cfg = config.eval_input_reader
     model_cfg = config.model.second
     train_cfg = config.train_config
-
-    class_names = list(input_cfg.class_names)
     #########################
     # Build Voxel Generator
     #########################
@@ -147,10 +148,8 @@ def train(config_path,
     # Build NetWork
     ######################
     center_limit_range = model_cfg.post_center_limit_range
-    # net = second_builder.build(model_cfg, voxel_generator, target_assigner)
     net = second_builder.build(model_cfg, voxel_generator, target_assigner, input_cfg.batch_size)
     net.cuda()
-    # net_train = torch.nn.DataParallel(net).cuda()
     print("num_trainable parameters:", len(list(net.parameters())))
     # for n, p in net.named_parameters():
     #     print(n, p.shape)
@@ -158,8 +157,13 @@ def train(config_path,
     # Build Optimizer
     ######################
     # we need global_step to create lr_scheduler, so restore net first.
-    torchplus.train.try_restore_latest_checkpoints(model_dir, [net])
-    gstep = net.get_global_step() - 1
+    if checkpoint is None:
+        torchplus.train.try_restore_latest_checkpoints(model_dir, [net])
+        gstep = net.get_global_step() - 1
+    else:
+        torchplus.train.restore(checkpoint, net) 
+        gstep = -1
+    
     optimizer_cfg = train_cfg.optimizer
     if train_cfg.enable_mixed_precision:
         net.half()
@@ -264,7 +268,7 @@ def train(config_path,
                 example_tuple[11] = torch.from_numpy(example_tuple[11])
                 example_tuple[12] = torch.from_numpy(example_tuple[12])
 
-                assert 13 == len(example_tuple), "something write with training input size!"
+                assert 14 == len(example_tuple), "something write with training input size!"
 
                 # ret_dict = net(example_torch)
 
@@ -304,11 +308,17 @@ def train(config_path,
                 anchors = example_tuple[6]
                 labels = example_tuple[8]
                 reg_targets = example_tuple[9]
+                
+                image_path = example_tuple[13]
 
                 input = [pillar_x, pillar_y, pillar_z, pillar_i, num_points_per_pillar,
                          x_sub_shaped, y_sub_shaped, mask, coors, anchors, labels, reg_targets]
 
-                ret_dict = net(input)
+                # print(len(dataloader.dataset), dataloader.batch_size)
+                ret_dict = net(input, image_path)
+
+                if ret_dict == False:
+                    print("Skip .. differenct size reg_targets & box_preds")
 
                 assert 10 == len(ret_dict), "something write with training output size!"
 
@@ -331,8 +341,8 @@ def train(config_path,
                 mixed_optimizer.zero_grad()
                 net.update_global_step()
                 net_metrics = net.update_metrics(cls_loss_reduced,
-                                                 loc_loss_reduced, cls_preds,
-                                                 labels, cared)
+                                                loc_loss_reduced, cls_preds,
+                                                labels, cared)
 
                 step_time = (time.time() - t)
                 t = time.time()
@@ -348,7 +358,7 @@ def train(config_path,
                 if global_step % display_step == 0:
                     loc_loss_elem = [
                         float(loc_loss[:, :, i].sum().detach().cpu().numpy() /
-                              batch_size) for i in range(loc_loss.shape[-1])
+                            batch_size) for i in range(loc_loss.shape[-1])
                     ]
                     metrics["step"] = global_step
                     metrics["steptime"] = step_time
@@ -791,11 +801,11 @@ def export_onnx(net, example, class_names, batch_image_shape,
     net.onnx_mode = True
 
     print('-------------- network readable visiual --------------')
-    torch.onnx.export(net, example1, "pfe.onnx", verbose=False, input_names=input_names, opset_version=6)
+    torch.onnx.export(net, example1, "pfe.onnx", verbose=False, input_names=input_names)
     print('pfe.onnx transfer success ...')
 
     rpn_input = torch.ones([1, 64, 496, 432], dtype=torch.float32, device=pillar_x.device)
-    torch.onnx.export(net.rpn, rpn_input, "rpn.onnx", verbose=False, opset_version=6)
+    torch.onnx.export(net.rpn, rpn_input, "rpn.onnx", verbose=False)
     print('rpn.onnx transfer success ...')
 
     return 0

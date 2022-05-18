@@ -1,13 +1,14 @@
-import imp
+# from mayavi import mlab
+# mlab.options.offscreen = True
+
 import numpy as np
 from math import sin, cos, radians
 # from .KittiDataset import KittiDataset
 from visualization.KittiUtils import *
 import visualization.BEVutils as BEVutils
-import cv2, PIL
 import os, sys
-from torch import tensor
-# from mayavi import mlab
+import cv2, PIL
+
 
 from PIL import Image
 from PIL import ImageDraw
@@ -20,16 +21,23 @@ class KittiVisualizer:
         self.__scene_2D_mode = False
         self.scene_2D_width = 750
         self.ground_truth_color = (0,1,0) # green
-        self.thickness = 3
+        self.thickness = 1
         self.user_press = None
         self.confidence_score_thresh = 0.25 
+        # for bev only
         self.semantic_colors = {
             0: (255,0,0),
-            1: (0,255,0),
-            2: (0,0,255),
+            1: (0,0,255),
+            2: (0,255,0),
             3: (255,0,255)
         }
-        
+
+        self.colors = [
+            (255, 10, 0),
+            (255,0 , 255),
+            (255,255,0),
+        ]
+
     def visualize_scene_3D(self, pointcloud, objects, labels=None, calib=None):
         """
             Visualize the Scene including Point Cloud & 3D Boxes 
@@ -146,6 +154,9 @@ class KittiVisualizer:
         # 3D Boxes of model output
         for obj in objects:
             color = self.__get_box_color(obj.label)
+            color = list(color)
+            color[0], color[2] = color[2], color[0] # swap to converrt from BGR to RGB
+            color = tuple(color)
             self.__draw_bev_box3d(BEV, obj.bbox_3d, color, calib)
 
         # # 3D Boxes of dataset labels 
@@ -155,7 +166,6 @@ class KittiVisualizer:
                 color = [c * 255 for c in self.ground_truth_color]
                 self.__draw_bev_box3d(BEV, obj.bbox_3d, color, calib)
 
-        print('BEV.shape',BEV.shape)
         if self.__scene_2D_mode:
             return BEV 
 
@@ -208,7 +218,8 @@ class KittiVisualizer:
 
     def __show_3D(self):
         # mlab.show(stop=True)
-        pass
+        print("Called show")
+        # pass
 
     def __show_2D(self):
         print("**************** Press n for next example ... Press ESC to quit *****************")
@@ -218,7 +229,7 @@ class KittiVisualizer:
         pointcloud = self.__to_numpy(pointcloud)
         # mlab.points3d(pointcloud[:,0], pointcloud[:,1], pointcloud[:,2], 
         #             colormap='gnuplot', scale_factor=1, mode="point",  figure=self.figure)
-        self.__draw_axes()
+        # self.__draw_axes()
 
     def visualize_3d_bbox(self, bbox: BBox3D, color=(0,1,0), calib=None):
         corners = self.__convert_3d_bbox_to_corners(bbox, calib)
@@ -393,7 +404,7 @@ class KittiVisualizer:
             draw_.line(xy=[(corner1[x], corner1[y]), (corner2[x], corner2[y])], \
                 fill=clr, width=self.thickness)           
 
-    def __draw_text_2D(self, text, point, bbox_volume, color=(255, 255, 255), font_scale=0.4, thickness=2, font=cv2.FONT_HERSHEY_SIMPLEX):
+    def __draw_text_2D(self, text, point, bbox_volume, color=(255, 255, 255), font_scale=0.4, thickness=2):
         # cv2.putText(self.current_image, text, point, font, font_scale, color, thickness)
         draw = ImageDraw.Draw(self.current_image, mode='RGB')
         # font = ImageFont.truetype('Extras/arial.ttf', int(bbox_volume))
@@ -411,13 +422,7 @@ class KittiVisualizer:
         if type(class_id) == str:
             class_id = class_name_to_label(class_id)
 
-        colors = [
-            (168, 50, 162),
-            (0,205,255),
-            (255,255,51),
-        ]
-
-        return colors[class_id]
+        return self.colors[class_id]
 
     def __to_numpy(self, pointcloud):
         if not isinstance(pointcloud, np.ndarray):
