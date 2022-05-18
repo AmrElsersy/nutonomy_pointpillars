@@ -161,9 +161,9 @@ def train(config_path,
         torchplus.train.try_restore_latest_checkpoints(model_dir, [net])
         gstep = net.get_global_step() - 1
     else:
-        torchplus.train.restore(checkpoint, net) 
+        torchplus.train.restore(checkpoint, net)
         gstep = -1
-    
+
     optimizer_cfg = train_cfg.optimizer
     if train_cfg.enable_mixed_precision:
         net.half()
@@ -224,6 +224,12 @@ def train(config_path,
     ######################
     # Training
     ######################
+    # edit training steps for osuter
+    steps_per_epoch = len(dataset) / batch_size
+    input_cfg.max_num_epochs = 500
+    train_cfg.steps = steps_per_epoch * input_cfg.max_num_epochs
+    train_cfg.steps_per_eval = steps_per_epoch * 30 # evaluate each 50 epoch
+
     log_path = model_dir / 'log.txt'
     logf = open(log_path, 'a')
     logf.write(proto_str)
@@ -308,7 +314,7 @@ def train(config_path,
                 anchors = example_tuple[6]
                 labels = example_tuple[8]
                 reg_targets = example_tuple[9]
-                
+
                 image_path = example_tuple[13]
 
                 input = [pillar_x, pillar_y, pillar_z, pillar_i, num_points_per_pillar,
@@ -596,7 +602,7 @@ def predict_kitti_to_anno(net,
         num_example = annos[-1]["name"].shape[0]
         annos[-1]["image_idx"] = np.array(
             [img_idx] * num_example, dtype=np.int64)
-    
+
     return annos
 
 
