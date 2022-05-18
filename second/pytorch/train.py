@@ -586,7 +586,7 @@ def predict_kitti_to_anno(net,
         num_example = annos[-1]["name"].shape[0]
         annos[-1]["image_idx"] = np.array(
             [img_idx] * num_example, dtype=np.int64)
-    
+
     return annos
 
 
