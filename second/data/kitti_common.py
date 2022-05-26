@@ -224,6 +224,7 @@ def get_class_to_label_map():
         'Car': 0,
         'Pedestrian': 1,
         'Cyclist': 2,
+        'Bus': 3,
         'Van': 3,
         'Person_sitting': 4,
         'Truck': 5,
