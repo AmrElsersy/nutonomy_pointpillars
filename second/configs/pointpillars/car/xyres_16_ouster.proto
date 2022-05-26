@@ -120,7 +120,7 @@ train_input_reader: {
   class_names: ["Car", "Truck", "Cyclist"]
   max_num_epochs : 500
   batch_size: 2
-  prefetch_size : 25
+  prefetch_size : 10
   max_number_of_voxels: 12000
   shuffle_points: true
   num_workers: 2
@@ -177,8 +177,8 @@ train_config: {
   }
   inter_op_parallelism_threads: 4
   intra_op_parallelism_threads: 4
-  steps: 37000 # 148/2 steps per epoch * 500 epochs
-  steps_per_eval: 2220 # 148/2 steps per epoch * 30 epochs
+  steps: 370000 # 148/2 steps per epoch * 500 epochs
+  steps_per_eval: 1480 # 148/2 steps per epoch * 2S0 epochs
   save_checkpoints_secs : 900 # half hour
   save_summary_steps : 10
   enable_mixed_precision: false
@@ -189,7 +189,7 @@ train_config: {
 eval_input_reader: {
   class_names: ["Car", "Truck", "Cyclist"]
   batch_size: 2
-  max_num_epochs : 160
+  max_num_epochs : 500
   prefetch_size : 25
   max_number_of_voxels: 12000
   shuffle_points: false

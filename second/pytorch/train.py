@@ -27,6 +27,10 @@ from second.pytorch.builder import (box_coder_builder, input_reader_builder,
 from second.utils.eval import get_coco_eval_result, get_official_eval_result
 from second.utils.progress_bar import ProgressBar
 
+# remove numba warnings
+from numba.core.errors import NumbaWarning
+import warnings
+warnings.simplefilter('ignore', category=NumbaWarning)
 
 def get_paddings_indicator(actual_num, max_num, axis=0):
     """
@@ -211,24 +215,33 @@ def train(config_path,
         num_workers=input_cfg.num_workers,
         pin_memory=False,
         collate_fn=merge_second_batch,
-        worker_init_fn=_worker_init_fn)
+        worker_init_fn=_worker_init_fn,
+        drop_last= True
+        )
+        
     eval_dataloader = torch.utils.data.DataLoader(
         eval_dataset,
         batch_size=eval_input_cfg.batch_size,
         shuffle=False,
         num_workers=eval_input_cfg.num_workers,
         pin_memory=False,
-        collate_fn=merge_second_batch)
+        collate_fn=merge_second_batch,
+        drop_last= True)
     data_iter = iter(dataloader)
 
     ######################
     # Training
     ######################
     # edit training steps for osuter
-    steps_per_epoch = len(dataset) / batch_size
+    steps_per_epoch = len(dataset) / input_cfg.batch_size
     input_cfg.max_num_epochs = 500
-    train_cfg.steps = steps_per_epoch * input_cfg.max_num_epochs
-    train_cfg.steps_per_eval = steps_per_epoch * 30 # evaluate each 50 epoch
+    train_cfg.steps = int(steps_per_epoch * input_cfg.max_num_epochs)
+    train_cfg.steps_per_eval = int(steps_per_epoch * 20) # evaluate each 50 epoch
+
+    # print(steps_per_epoch)
+    # print(input_cfg.max_num_epochs)
+    # print(train_cfg.steps)
+    # print(train_cfg.steps_per_eval)
 
     log_path = model_dir / 'log.txt'
     logf = open(log_path, 'a')
@@ -260,10 +273,11 @@ def train(config_path,
                 lr_scheduler.step()
                 try:
                     example = next(data_iter)
+                # raised when dataloader finishes all the dataset(note that it will raised also if you used enumerate looping style on dataloader)
                 except StopIteration:
-                    print("end epoch")
                     if clear_metrics_every_epoch:
                         net.clear_metrics()
+                    # reset dataloader
                     data_iter = iter(dataloader)
                     example = next(data_iter)
                 example_torch = example_convert_to_torch(example, float_dtype)
